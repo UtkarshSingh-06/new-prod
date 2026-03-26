@@ -1,0 +1,13 @@
+[
+  {
+    "id": "ds-1",
+    "user_message": "Remind me to submit the weekly report every Friday and also book a doctor appointment next week.",
+    "expected_task_titles": ["Submit weekly report", "Book doctor appointment"]
+  },
+  {
+    "id": "ds-2",
+    "user_message": "I need to prepare for the product interview tomorrow. Estimate time and schedule it.",
+    "expected_task_titles": ["Prepare for product interview"]
+  }
+]
+
