@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import type { AssistantChatResponse } from "../App";
 
 type Props = {
@@ -58,7 +58,9 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
     <div className="border border-zinc-800 rounded-xl bg-zinc-900/40">
       <div className="px-5 py-4 border-b border-zinc-800">
         <div className="font-semibold">Chat + Task Plan</div>
-        <div className="text-xs text-zinc-400">Natural language -> JSON plan -> priority -> schedule</div>
+        <div className="text-xs text-zinc-400">
+          {"Natural language → JSON plan → priority → schedule"}
+        </div>
       </div>
 
       <div className="p-5 space-y-4">
