@@ -1,11 +1,9 @@
 from __future__ import annotations
 
+import re
 import time
-from datetime import datetime, timezone
-from typing import Any
 
 from langchain_core.output_parsers import PydanticOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 
@@ -14,6 +12,14 @@ from app.llm.prompts import FEW_SHOT_EXAMPLES, SYSTEM_PROMPT
 from app.llm.schemas import AssistantChatResponse, TaskPlan
 from app.memory.vectorstore import MemoryRepository
 from app.tools.tooling import build_apply_task_plan_tool
+
+
+def _strip_json_fences(raw: str) -> str:
+    s = raw.strip()
+    m = re.match(r"^```(?:json)?\s*([\s\S]*?)\s*```$", s)
+    if m:
+        return m.group(1).strip()
+    return s
 
 
 class LLMTaskAgent:
@@ -55,8 +61,8 @@ class LLMTaskAgent:
         result = self._llm.invoke([SystemMessage(content=system), HumanMessage(content=user_message)])
         _ = time.perf_counter() - t0  # reserved for latency in logs later
 
-        # Parse structured plan
-        raw = (result.content or "").strip()
+        # Parse structured plan (tolerate markdown fences)
+        raw = _strip_json_fences((result.content or "").strip())
         plan = parser.parse(raw)
 
         memory_written = self._memory.write(str(user_id), texts=[user_message] + plan.assumptions)
