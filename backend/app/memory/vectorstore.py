@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from urllib.parse import urlparse
 from datetime import datetime, timezone
 from typing import Iterable
 
@@ -31,10 +32,18 @@ class MemoryRepository:
             return None
 
         # For local dev, assume a Chroma server is running (docker-compose provides it).
+        u = urlparse(settings.chroma_url)
+        host = u.hostname or "localhost"
+        port = u.port if u.port is not None else 8001
+
         return Chroma(
             embedding_function=self._embeddings,
             collection_name=self._vector_kwargs["collection_name"],
-            client_settings={"chroma_api_impl": "rest", "chroma_server_host": "localhost", "chroma_server_http_port": 8001},
+            client_settings={
+                "chroma_api_impl": "rest",
+                "chroma_server_host": host,
+                "chroma_server_http_port": port,
+            },
         )
 
     def search(self, user_id: str, query: str, k: int = 5) -> list[Document]:
