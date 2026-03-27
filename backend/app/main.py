@@ -1,4 +1,4 @@
-import asyncio
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +33,13 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def _startup() -> None:
+        # LangSmith / LangChain tracing (optional)
+        if settings.langsmith_api_key:
+            os.environ.setdefault("LANGCHAIN_TRACING_V2", "true")
+            os.environ.setdefault("LANGCHAIN_API_KEY", settings.langsmith_api_key)
+            os.environ.setdefault("LANGSMITH_API_KEY", settings.langsmith_api_key)
+            os.environ.setdefault("LANGCHAIN_PROJECT", settings.langsmith_project)
+
         # Create tables for local/dev. In production you would use Alembic migrations.
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
