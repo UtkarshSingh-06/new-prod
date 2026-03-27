@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChatPanel from "./components/ChatPanel";
 import Dashboard from "./components/Dashboard";
 import LoginView from "./components/LoginView";
@@ -49,7 +49,7 @@ export default function App() {
     token ? "app" : "login",
   );
 
-  const authHeaders = useMemo(() => {
+  const authHeaders = useMemo((): Record<string, string> => {
     if (!token) return {};
     return { Authorization: `Bearer ${token}` };
   }, [token]);
@@ -99,7 +99,9 @@ export default function App() {
       <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
         <div>
           <div className="text-lg font-semibold">LLM Task Assistant</div>
-          <div className="text-xs text-zinc-400">Chat -> plan -> priority -> schedule</div>
+          <div className="text-xs text-zinc-400">
+            {"Chat → plan → priority → schedule"}
+          </div>
         </div>
         <button
           className="rounded-md bg-zinc-800 hover:bg-zinc-700 px-3 py-2 text-sm"
