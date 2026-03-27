@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     openai_model: str = "gpt-4o-mini"
 
-    # Embeddings + Memory
-    chroma_url: str = "http://localhost:8001"  # chromadb server for local dev
+    # Embeddings + Memory (Chroma HTTP server; docker-compose uses host "chroma")
+    chroma_url: str = "http://localhost:8001"
 
     # LangSmith
     langsmith_api_key: Optional[str] = None
