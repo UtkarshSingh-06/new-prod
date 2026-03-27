@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass(frozen=True)
@@ -11,14 +11,15 @@ class CalendarEventResult:
 
 
 def _fmt_dt(dt: datetime) -> str:
-    # Always emit in UTC for determinism.
-    dt_utc = dt.astimezone(dt.tzinfo)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt_utc = dt.astimezone(timezone.utc)
     return dt_utc.strftime("%Y%m%dT%H%M%SZ")
 
 
 def build_ics_event(summary: str, description: str, start: datetime, end: datetime) -> str:
     uid = f"{summary}-{int(start.timestamp())}".replace(" ", "-")
-    dtstamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    dtstamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return "\n".join(
         [
             "BEGIN:VCALENDAR",
