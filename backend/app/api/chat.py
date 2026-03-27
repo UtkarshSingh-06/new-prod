@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,9 +26,12 @@ async def chat(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AssistantChatResponse:
-    agent: LLMTaskAgent = request.app.state.agent
+    agent: LLMTaskAgent | None = request.app.state.agent
     if agent is None:
-        raise RuntimeError("LLM agent not initialized. Set OPENAI_API_KEY.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LLM agent not initialized. Set OPENAI_API_KEY.",
+        )
     # Request id used for correlation in logs/telemetry.
     request_id = request.headers.get("x-request-id")
     return await agent.run(user_id=current_user.id, user_message=body.message, db_session=db, request_id=request_id)
