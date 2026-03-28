@@ -37,7 +37,11 @@ export type AssistantChatResponse = {
   memory_written: boolean;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+// Dev: use Vite proxy (/api → 127.0.0.1:8000) so we never rely on localhost→IPv6 for the API.
+// Override with VITE_API_BASE for Docker or a remote API.
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  (import.meta.env.DEV ? "/api" : "http://127.0.0.1:8000");
 
 function getStoredToken() {
   return localStorage.getItem("access_token");
@@ -95,31 +99,42 @@ export default function App() {
   if (!token) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-        <div>
-          <div className="text-lg font-semibold">LLM Task Assistant</div>
-          <div className="text-xs text-zinc-400">
-            {"Chat → plan → priority → schedule"}
+    <div className="relative min-h-dvh min-h-svh overflow-x-hidden bg-zinc-950 text-zinc-100">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_100%_60%_at_50%_-10%,rgba(139,92,246,0.18),transparent)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(59,130,246,0.08),transparent_40%)]"
+      />
+
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-zinc-950/75 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-lg font-semibold tracking-tight text-transparent">
+              AI Task Assistant
+            </div>
+            <div className="text-xs text-zinc-400 sm:text-sm">
+              {"Chat → plan → priority → schedule"}
+            </div>
           </div>
+          <button
+            type="button"
+            className="self-start rounded-xl border border-zinc-600/80 bg-zinc-800/40 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 active:scale-[0.98] sm:self-auto"
+            onClick={onLogout}
+          >
+            Log out
+          </button>
         </div>
-        <button
-          className="rounded-md bg-zinc-800 hover:bg-zinc-700 px-3 py-2 text-sm"
-          onClick={onLogout}
-        >
-          Logout
-        </button>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6">
+      <main className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-12">
         <section className="lg:col-span-5">
           <ChatPanel apiBase={API_BASE} authHeaders={authHeaders} />
         </section>
         <section className="lg:col-span-7">
-          <Dashboard
-            apiBase={API_BASE}
-            authHeaders={authHeaders}
-          />
+          <Dashboard apiBase={API_BASE} authHeaders={authHeaders} />
         </section>
       </main>
     </div>
