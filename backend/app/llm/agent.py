@@ -9,6 +9,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.core.config import settings
 from app.llm.prompts import FEW_SHOT_EXAMPLES, SYSTEM_PROMPT
+from app.llm.providers import build_chat_llm_kwargs, validate_llm_config_for_startup
 from app.llm.schemas import AssistantChatResponse, TaskPlan
 from app.memory.vectorstore import MemoryRepository
 from app.tools.tooling import build_apply_task_plan_tool
@@ -24,10 +25,8 @@ def _strip_json_fences(raw: str) -> str:
 
 class LLMTaskAgent:
     def __init__(self) -> None:
-        if not settings.openai_api_key:
-            raise RuntimeError("Missing OpenAI API key. Set OPENAI_API_KEY in your environment.")
-
-        self._llm = ChatOpenAI(model=settings.openai_model, temperature=0)
+        validate_llm_config_for_startup()
+        self._llm = ChatOpenAI(**build_chat_llm_kwargs())
         self._memory = MemoryRepository()
 
     async def run(self, *, user_id: int, user_message: str, db_session, request_id: str | None = None) -> AssistantChatResponse:
