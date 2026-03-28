@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
+import AuthSurface from "./AuthSurface";
 
 type Props = {
   apiBase: string;
   onLogin: (token: string) => void;
   onSwitchToRegister: () => void;
 };
+
+const inputClass =
+  "block w-full rounded-xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 focus:border-violet-500/70 focus:outline-none focus:ring-2 focus:ring-violet-500/25";
 
 export default function LoginView({
   apiBase,
@@ -16,7 +20,8 @@ export default function LoginView({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const submit = async () => {
+  const submit = async (e?: FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
     setError(null);
     try {
@@ -35,64 +40,84 @@ export default function LoginView({
       }
       const data = await res.json();
       onLogin(data.access_token);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-100 p-6">
-      <div className="w-full max-w-md border border-zinc-800 rounded-xl p-6 bg-zinc-900/40">
-        <h1 className="text-2xl font-semibold mb-1">Login</h1>
-        <p className="text-sm text-zinc-400 mb-5">JWT-protected task planner</p>
-
-        <div className="space-y-3">
-          <label className="block">
-            <div className="text-sm text-zinc-300 mb-1">Email</div>
+    <AuthSurface title="Welcome back" subtitle="Sign in to your AI task workspace">
+      <form className="space-y-5" onSubmit={submit} noValidate>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-zinc-300">
+              Email
+            </label>
             <input
-              className="w-full rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 outline-none focus:border-violet-500"
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className={inputClass}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(ev) => setEmail(ev.target.value)}
               placeholder="you@example.com"
             />
-          </label>
-
-          <label className="block">
-            <div className="text-sm text-zinc-300 mb-1">Password</div>
+          </div>
+          <div>
+            <label htmlFor="login-password" className="mb-1.5 block text-sm font-medium text-zinc-300">
+              Password
+            </label>
             <input
+              id="login-password"
+              name="password"
               type="password"
-              className="w-full rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 outline-none focus:border-violet-500"
+              autoComplete="current-password"
+              required
+              className={inputClass}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              onChange={(ev) => setPassword(ev.target.value)}
+              placeholder="Enter your password"
             />
-          </label>
+          </div>
+        </div>
 
-          {error ? (
-            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
-              {error}
-            </div>
-          ) : null}
-
-          <button
-            disabled={loading}
-            className="w-full rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-60 py-2 font-medium"
-            onClick={submit}
+        {error ? (
+          <div
+            className="rounded-xl border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+            role="alert"
           >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+            {error}
+          </div>
+        ) : null}
 
+        <div className="flex flex-col gap-3 pt-1">
           <button
-            className="w-full rounded-md border border-zinc-800 hover:bg-zinc-800/40 py-2 font-medium"
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/35 transition duration-200 hover:from-violet-500 hover:to-fuchsia-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98]"
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Signing in…
+              </span>
+            ) : (
+              "Sign in"
+            )}
+          </button>
+          <button
+            type="button"
+            className="inline-flex w-full items-center justify-center rounded-xl border border-zinc-600/70 bg-zinc-800/35 px-4 py-3.5 text-sm font-medium text-zinc-200 transition duration-200 hover:border-zinc-500 hover:bg-zinc-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/40 active:scale-[0.98]"
             onClick={onSwitchToRegister}
           >
-            Create account
+            Create an account
           </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </AuthSurface>
   );
 }
-
