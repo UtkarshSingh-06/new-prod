@@ -10,13 +10,17 @@ LLMProvider = Literal["openai", "groq", "ollama"]
 
 
 def effective_llm_provider() -> LLMProvider:
-    """Use Groq endpoint when the key is a Groq key but LLM_PROVIDER was left as openai (common mistake)."""
-    declared: LLMProvider = settings.llm_provider  # type: ignore[assignment]
-    if declared != "openai":
-        return declared
+    """Resolve provider. Groq keys (gsk_) always use Groq.
+
+    System environment variables override values from .env; a stray LLM_PROVIDER=ollama
+    in the OS would otherwise send a Groq key to localhost:11434 and fail or mis-route.
+    """
     key = (settings.openai_api_key or "").strip()
     if key.startswith("gsk_"):
         return "groq"
+    declared: LLMProvider = settings.llm_provider  # type: ignore[assignment]
+    if declared != "openai":
+        return declared
     return "openai"
 
 
