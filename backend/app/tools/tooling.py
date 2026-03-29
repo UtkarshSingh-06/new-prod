@@ -36,12 +36,18 @@ class _TempTask:
 
 def build_apply_task_plan_tool(db: AsyncSession, user_id: int):
     @tool("apply_task_plan", args_schema=ApplyTaskPlanArgs, return_direct=False)
-    async def apply_task_plan(args: ApplyTaskPlanArgs) -> dict[str, Any]:
+    async def apply_task_plan(
+        tasks: list[TaskSpec],
+        assumptions: list[str] | None = None,
+        preferences: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Persist tasks, score+schedule them, generate calendar ICS events, and store notifications.
         """
+        _ = preferences or {}  # reserved for future scheduling hints
+        assumptions = assumptions or []
         temp_tasks: list[_TempTask] = []
-        for i, spec in enumerate(args.tasks):
+        for i, spec in enumerate(tasks):
             signals = PrioritySignals(
                 priority_label=spec.priority,
                 due_at=spec.due_at,
@@ -101,7 +107,7 @@ def build_apply_task_plan_tool(db: AsyncSession, user_id: int):
             for t in temp_tasks
         ]
         notif_msg = "Scheduled tasks:\n" + "\n".join(summary_lines)
-        notif = await create_notifications(db, user_id=user_id, messages=[notif_msg] + args.assumptions, kind="info")
+        notif = await create_notifications(db, user_id=user_id, messages=[notif_msg] + assumptions, kind="info")
         await db.commit()
 
         return {
