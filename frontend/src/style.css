@@ -1,14 +1,48 @@
 @import "tailwindcss";
 
-/* App shell: old Vite template forced centered text and fixed width — broke forms and Tailwind layout */
+/* Design tokens — dark glass + violet/cyan accents */
+:root {
+  color-scheme: dark;
+  --app-bg: #09090b;
+  --surface-glass: rgba(24, 24, 27, 0.55);
+  --surface-glass-strong: rgba(24, 24, 27, 0.72);
+  --ring-subtle: rgba(255, 255, 255, 0.06);
+  --accent-violet: rgb(139, 92, 246);
+  --accent-cyan: rgb(34, 211, 238);
+  --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
 
-body {
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body.app-body {
   margin: 0;
   min-height: 100svh;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  background-color: var(--app-bg);
+  color: #fafafa;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+  color: #fafafa;
 }
 
 #app {
@@ -20,4 +54,66 @@ body {
   margin: 0;
   border: none;
   display: block;
+}
+
+/* Ambient mesh — subtle motion (respects reduced motion above) */
+@keyframes mesh-drift {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(1.03) translate(1%, -1%);
+  }
+}
+
+.app-mesh-layer {
+  animation: mesh-drift 28s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-mesh-layer {
+    animation: none;
+  }
+}
+
+/* Reusable glass panel (use with Tailwind utilities) */
+.surface-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Primary CTA shimmer on hover */
+@keyframes btn-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.btn-primary-glow {
+  background-size: 200% auto;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease,
+    filter 0.2s ease;
+}
+
+.btn-primary-glow:hover:not(:disabled) {
+  box-shadow:
+    0 12px 40px -8px rgba(139, 92, 246, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  filter: brightness(1.05);
+}
+
+.btn-primary-glow:active:not(:disabled) {
+  transform: scale(0.98);
 }
