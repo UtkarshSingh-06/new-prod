@@ -4,6 +4,7 @@ import type { AssistantChatResponse } from "../App";
 type Props = {
   apiBase: string;
   authHeaders: Record<string, string>;
+  onSessionInvalid?: () => void;
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
@@ -39,7 +40,7 @@ function formatChatHttpError(status: number, body: string): string {
   return detail;
 }
 
-export default function ChatPanel({ apiBase, authHeaders }: Props) {
+export default function ChatPanel({ apiBase, authHeaders, onSessionInvalid }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +68,10 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
       });
       if (!res.ok) {
         const text = await res.text();
+        if (res.status === 401) {
+          onSessionInvalid?.();
+          return;
+        }
         throw new Error(formatChatHttpError(res.status, text));
       }
       const data = (await res.json()) as AssistantChatResponse;
@@ -87,30 +92,35 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/55 shadow-xl shadow-black/20 backdrop-blur-md transition-shadow duration-300 hover:shadow-violet-950/20">
-      <div className="border-b border-white/10 px-4 py-4 sm:px-5 sm:py-5">
-        <div className="font-semibold tracking-tight text-zinc-100">Chat &amp; task plan</div>
-        <div className="mt-0.5 text-xs text-zinc-400 sm:text-sm">
-          {"Natural language → JSON plan → priority → schedule"}
+    <div className="group/card rounded-2xl border border-white/[0.08] bg-zinc-900/45 shadow-2xl shadow-black/40 ring-1 ring-inset ring-white/[0.04] backdrop-blur-xl transition-[box-shadow,transform] duration-300 hover:shadow-violet-950/25 hover:ring-violet-500/10">
+      <div className="border-b border-white/[0.06] bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-cyan-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cyan-300/90">
+            Live
+          </span>
+          <div className="font-semibold tracking-tight text-zinc-50">Chat &amp; task plan</div>
+        </div>
+        <div className="mt-1.5 text-xs leading-relaxed text-zinc-500 sm:text-sm">
+          Describe work in your own words — we turn it into a structured plan and tasks.
         </div>
       </div>
 
       <div className="space-y-4 p-4 sm:p-5">
-        <div className="min-h-[200px] max-h-[min(50vh,320px)] overflow-y-auto rounded-xl border border-zinc-800/80 bg-zinc-950/50 p-3 shadow-inner sm:min-h-[240px] sm:max-h-[min(52vh,400px)]">
+        <div className="min-h-[200px] max-h-[min(50vh,320px)] overflow-y-auto rounded-xl border border-zinc-700/40 bg-gradient-to-b from-zinc-950/90 via-zinc-950/70 to-zinc-950/50 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:min-h-[240px] sm:max-h-[min(52vh,400px)]">
           {chat.length === 0 ? (
-            <p className="text-sm leading-relaxed text-zinc-500">
-              <span className="text-zinc-400">Try:</span> Prepare for the product interview tomorrow and book a doctor
-              appointment next week.
-            </p>
+            <div className="rounded-lg border border-dashed border-zinc-700/50 bg-zinc-900/30 p-4 text-sm leading-relaxed text-zinc-500">
+              <span className="font-medium text-zinc-400">Example:</span> “Prepare for the product interview tomorrow and book a
+              doctor appointment next week.”
+            </div>
           ) : null}
-          <div className="space-y-3">
+          <div className="space-y-3 pt-1">
             {chat.map((m, idx) => (
               <div key={idx} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
                 <div
                   className={
                     m.role === "user"
-                      ? "max-w-[92%] rounded-2xl rounded-br-md bg-gradient-to-br from-violet-600 to-fuchsia-600 px-3.5 py-2.5 text-sm text-white shadow-md sm:max-w-[85%]"
-                      : "max-w-[92%] rounded-2xl rounded-bl-md border border-zinc-700/80 bg-zinc-800/80 px-3.5 py-2.5 text-sm text-zinc-100 sm:max-w-[85%]"
+                      ? "max-w-[92%] rounded-2xl rounded-br-md bg-gradient-to-br from-violet-600 via-violet-600 to-fuchsia-600 px-3.5 py-2.5 text-sm text-white shadow-lg shadow-violet-900/35 ring-1 ring-white/10 sm:max-w-[85%]"
+                      : "max-w-[92%] rounded-2xl rounded-bl-md border border-zinc-600/40 bg-zinc-800/70 px-3.5 py-2.5 text-sm text-zinc-100 shadow-md backdrop-blur-sm sm:max-w-[85%]"
                   }
                 >
                   {m.content}
@@ -121,33 +131,33 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
         </div>
 
         {lastResponse ? (
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4">
-            <div className="mb-2 font-medium text-zinc-100">Latest plan</div>
+          <div className="rounded-xl border border-violet-500/20 bg-gradient-to-br from-zinc-950/80 to-violet-950/20 p-4 shadow-[0_0_40px_-12px_rgba(139,92,246,0.35)] ring-1 ring-inset ring-white/[0.04]">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-violet-300/80">Latest plan</div>
             <div className="mb-3 text-xs text-zinc-400">
-              Next action:{" "}
-              <span className="font-medium text-violet-300">{lastResponse.plan.next_action}</span>
+              Next step:{" "}
+              <span className="font-medium text-cyan-300">{lastResponse.plan.next_action}</span>
             </div>
 
             {lastResponse.plan.clarification_questions.length > 0 ? (
               <div className="space-y-2">
                 {lastResponse.plan.clarification_questions.map((q, i) => (
-                  <div key={i} className="text-sm text-zinc-200">
-                    Q{i + 1}: {q}
+                  <div key={i} className="rounded-lg border border-amber-500/20 bg-amber-950/20 px-3 py-2 text-sm text-amber-100/90">
+                    <span className="font-medium text-amber-200/90">Q{i + 1}:</span> {q}
                   </div>
                 ))}
               </div>
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {lastResponse.plan.tasks.map((t, i) => (
                   <li
                     key={i}
-                    className="flex flex-col gap-2 rounded-lg border border-zinc-800/60 bg-zinc-900/40 p-3 sm:flex-row sm:items-start sm:justify-between"
+                    className="flex flex-col gap-2 rounded-xl border border-zinc-700/40 bg-zinc-900/50 p-3 backdrop-blur-sm sm:flex-row sm:items-start sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-zinc-100">{t.title}</div>
-                      <div className="mt-0.5 text-xs text-zinc-400">{t.description}</div>
+                      <div className="text-sm font-medium text-zinc-50">{t.title}</div>
+                      <div className="mt-0.5 text-xs leading-relaxed text-zinc-400">{t.description}</div>
                     </div>
-                    <span className="shrink-0 self-start rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-300">
+                    <span className="shrink-0 self-start rounded-full border border-fuchsia-500/35 bg-fuchsia-500/10 px-2.5 py-1 text-xs font-medium capitalize text-fuchsia-200">
                       {t.priority}
                     </span>
                   </li>
@@ -155,14 +165,11 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
               </ul>
             )}
 
-            <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 sm:text-xs">
-              <span>Created: {lastResponse.created_task_ids.length}</span>
-              <span className="text-zinc-700">·</span>
-              <span>Scheduled: {lastResponse.scheduled_task_ids.length}</span>
-              <span className="text-zinc-700">·</span>
-              <span>Notifications: {lastResponse.notifications_sent}</span>
-              <span className="text-zinc-700">·</span>
-              <span>Memory: {String(lastResponse.memory_written)}</span>
+            <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5 text-[11px] text-zinc-500 sm:text-xs">
+              <span className="rounded-md bg-zinc-900/60 px-2 py-0.5">Created {lastResponse.created_task_ids.length}</span>
+              <span className="rounded-md bg-zinc-900/60 px-2 py-0.5">Scheduled {lastResponse.scheduled_task_ids.length}</span>
+              <span className="rounded-md bg-zinc-900/60 px-2 py-0.5">Notifications {lastResponse.notifications_sent}</span>
+              <span className="rounded-md bg-zinc-900/60 px-2 py-0.5">Memory {String(lastResponse.memory_written)}</span>
             </div>
           </div>
         ) : null}
@@ -185,18 +192,18 @@ export default function ChatPanel({ apiBase, authHeaders }: Props) {
           </div>
         ) : null}
 
-        <form className="flex flex-col gap-3 sm:flex-row" onSubmit={send}>
+        <form className="flex flex-col gap-3 sm:flex-row sm:items-stretch" onSubmit={send}>
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe what you need to get done…"
+            placeholder="What do you need to get done?"
             aria-label="Task message"
-            className="min-h-11 flex-1 rounded-xl border border-zinc-700/80 bg-zinc-950/70 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus:border-violet-500/70 focus:outline-none focus:ring-2 focus:ring-violet-500/25"
+            className="min-h-11 flex-1 rounded-xl border border-zinc-600/45 bg-zinc-950/55 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-sm transition hover:border-zinc-500/55 focus:border-cyan-400/45 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
           />
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:from-violet-500 hover:to-fuchsia-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 disabled:cursor-not-allowed disabled:opacity-55 active:scale-[0.98] sm:px-6"
+            className="btn-primary-glow inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/35 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-55"
           >
             {loading ? (
               <span className="inline-flex items-center gap-2">
